@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AgentRelated">
+    <!-- 获取成本列表 -->
+    <select id="getPageList" resultType="map" parameterType="Page">
+        select a.id,a.agent_num,a.rated,a.rates, a.ratetype, a.agent_name, a.add_date, a.add_time, a.add_man, a.modifynote, a.credit_type from agent_related a
+        <where>
+            <!-- 顶级机构限制 -->
+            <if test="params.obj_no!=null and params.obj_no!=''">
+                and to_char(a.agent_num)=#{params.obj_no}
+            </if>
+            <!-- 机构编号 -->
+            <if test="params.agent_num!=null and params.agent_num!=''">
+                and to_char(a.agent_num)=#{params.agent_num}
+            </if>
+            <!-- 机构名称 -->
+            <if test="params.agent_name!=null and params.agent_name!=''">
+                and a.agent_name like '%${params.agent_name}%'
+            </if>
+            <!-- 费率类型 -->
+            <if test="params.ratetype!=null and params.ratetype!=''">
+                and to_char(a.ratetype) = #{params.ratetype}
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="params.start_date!=null and params.start_date!=''">
+                and a.add_date <![CDATA[>=]]> #{params.start_date}
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="params.end_date!=null and params.end_date!=''">
+                and a.add_date <![CDATA[<=]]> #{params.end_date}
+            </if>
+        </where>
+        order by a.agent_num,a.id desc
+    </select>
+
+    <select id="getRelatedByInfo" parameterType="map" resultType="map">
+        select * from agent_related where agent_num = #{agent_num}
+        <if test="obj_no != null and obj_no !=''">
+            and to_char(agent_num)=#{obj_no}
+        </if>
+    </select>
+    <!-- 查看成本详情 -->
+    <select id="getOne" resultType="map" parameterType="String">
+        select a.id, a.agent_num, a.agent_name, a.add_man, a.add_date, a.add_time, a.rated, a.rates, a.ratetype, a.modifynote, a.credit_type
+        from agent_related a
+        where a.id = #{value}
+    </select>
+    <!-- 添加成本 -->
+    <insert id="saveAgentRelated" parameterType="list" useGeneratedKeys="false">
+      insert into agent_related(id,agent_num,agent_name,add_man,add_date,add_time,rated,rates,ratetype,credit_type)
+      SELECT
+        SEQ_AGENT_RELATED.nextval AS id, a.* from(
+        <foreach collection="list" item="item" index="index" separator="union all">
+        (
+          select
+            #{item.agent_num},
+            #{item.agent_name},
+            #{item.add_man},
+            #{item.add_date},
+            #{item.add_time},
+            #{item.rated},
+            #{item.rates},
+            #{item.ratetype},
+            #{item.credit_type}
+          from dual
+        )
+      </foreach>
+      ) a
+    </insert>
+    <!-- 添加费率代号信息表 -->
+    <insert id="saveRateInfo" parameterType="list" useGeneratedKeys="false">
+        insert all
+        <foreach collection="list" item="item" index="index">
+            into rate_info(ar_mark,ar_name,ar_content,ar_type,ar_status,add_time,add_man,armark_fl
+
+            <if test="item.armark_fd!=null and item.armark_fd!=''">
+                ,armark_fd
+            </if>
+            )
+            values
+            (
+              #{item.ar_mark},
+              #{item.ar_name},
+              #{item.ar_content},
+              2,
+              0,
+              #{item.add_time},
+              #{item.add_man},
+              #{item.armark_fl}
+              <if test="item.armark_fd!=null and item.armark_fd!=''">
+                ,#{item.armark_fd}
+              </if>
+            )
+        </foreach>
+        select 1 from dual
+    </insert>
+    <!-- 添加费率规则算法表 -->
+    <insert id="saveRateAlgorithm" parameterType="list" useGeneratedKeys="false">
+        insert into rate_algorithm(id,ar_mark,onset_money,end_money,ar_content,ar_type)
+        select
+        seq_rate_algorithm.nextval as id, a.* from(
+        <foreach collection="list" item="item" index="index" separator="union all">
+            (
+            select
+            #{item.ar_mark},
+            #{item.onset_money},
+            #{item.end_money},
+            #{item.ar_content},
+            #{item.ar_type}
+            from dual
+            )
+        </foreach>
+        ) a
+    </insert>
+    <!-- 修改成本 -->
+    <update id="updateAgentRelated" parameterType="list">
+        begin
+        <foreach collection="list" item="item" index="index" open="" close="" separator=";">
+            update agent_related
+            <set>
+                rated = #{item.rated},
+                rates = #{item.rates},
+                modifynote = #{item.modifynote}
+            </set>
+            where id = #{item.id}
+            <if test="item.obj_no!=null and item.obj_no!=''">
+                and agent_num = #{item.obj_no}
+            </if>
+        </foreach>
+        ;end;
+    </update>
+    <!-- 查询成本费率 -->
+    <select id="getRateList" parameterType="list" resultType="String">
+        select ar_mark from rate_info where
+        ar_mark in (
+        <foreach collection="list" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+        )
+    </select>
+</mapper>

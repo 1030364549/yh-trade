@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Accounts">
+	<!-- 申请商户页面信息 -->
+	<select id="getPageList" resultType="map" parameterType="Page">
+		select * from accounts mi
+		<where>
+			<if test="params.bank_name!=null and params.bank_name!=''">
+				and mi.bank_name like '%'||#{params.bank_name}||'%'
+			</if>
+			<if test="params.screen_name!=null and params.screen_name!=''">
+				and mi.screen_name like '%'||#{params.screen_name}||'%'
+			</if>
+			<if test="params.screen_num!=null and params.screen_num!=''">
+			    and mi.show_screennum like '%'||#{params.screen_num}||'%'
+			</if>
+			<if test="params.seq_id!=null and params.seq_id!=''">
+				and mi.seq_id=#{params.seq_id}
+			</if>
+			<if test="params.phone!=null and params.phone!=''">
+			    and mi.resphone =#{params.phone}
+			</if>
+			<if test="params.show_resphone!=null and params.show_resphone!=''">
+				and (substr(mi.show_resphone,0,3) like '%'||#{params.show_resphone}||'%' or substr(mi.show_resphone,8,11) like '%'||#{params.show_resphone}||'%')
+			</if>
+			<if test="params.nature!=null and params.nature!=''">
+				and mi.nature=#{params.nature}
+			</if>
+			<if test="params.da_marker!=null and params.da_marker!=''">
+				and mi.da_marker=#{params.da_marker}
+			</if>
+		</where>
+        order by mi.id desc
+	</select>
+	
+	<!-- 添加商户结算信息 -->
+	<insert id="saveAccount" parameterType="map" >
+		insert into accounts(id, bank_name, screen_name, screen_num,bank_num,seq_id,da_marker,nature,createman,createdate,
+		acmoney,resphone,bank_headname,bank_address,screen_idnum,show_screenidnum,show_resphone,show_screennum,area_name,note)
+		values (seq_accounts.nextval, #{bank_name}, #{screen_name}, #{screen_num}, #{bank_num}, #{merno}, 1, #{nature},
+		#{createman}, #{createdate}, 10, #{resphone}, #{bank_headname}, #{bank_address}, #{screen_idnum}, #{show_screenidnum},
+		#{show_resphone}, #{show_screennum}, #{area_name},#{note})
+	</insert>
+	
+	<!-- 根据商户编号查询商户結算信息 -->
+	<select id="getOne" resultType="map" parameterType="map">
+		select a.note,a.id,a.bank_name,a.screen_name,a.screen_num,a.bank_num,a.seq_id,a.da_marker,a.nature,
+		 a.createman,a.createdate,a.acmoney,a.resphone,a.settle_cycle,a.bank_headname,a.bank_address,a.screen_idnum,
+		 a.show_screenidnum,a.show_resphone,a.show_screennum,a.picno,a.area_name,a.bottom_pic
+		 from accounts a where a.seq_id=#{seq_id} and a.da_marker=#{type}
+	</select>
+	
+	<!-- 根据商户编号查询商户結算信息 -->
+	<select id="getOneToId" resultType="com.yh.entity.Accounts" parameterType="String">
+		select * from accounts where id=#{id}
+	</select>
+
+	<select id="getOneBySeqId" resultType="com.yh.entity.Accounts" parameterType="String">
+		select * from accounts where SEQ_ID=#{id}
+	</select>
+	
+	<!-- 更新商户信息 -->
+	<update id="updateAccount" parameterType="map">
+		update accounts set
+			bank_name=#{bank_name},
+			screen_name=#{screen_name},
+			bank_num=#{bank_num},
+			nature=#{nature},
+			bank_headname=#{bank_headname},
+			bank_address=#{bank_address},
+			area_name=#{area_name},
+			note=#{note}
+		where seq_id=#{agent_num} and da_marker=1
+		<if test="obj_no!=null and obj_no!=''">
+			and seq_id=#{obj_no}
+		</if>
+	</update>
+	
+	<!-- 开通取消全额结算功能 -->
+	<update id="allaudit" parameterType="map">
+		update accounts set isallaudit=#{isallaudit},note=#{note} where id=#{id}
+	</update>
+	
+	<!-- 开通取消全额结算功能 -->
+	<update id="frozen" parameterType="map">
+		update accounts set status=#{status},note=#{note} where id=#{id}
+	</update>
+	
+	<!-- 开通取消全额结算功能 -->
+	<delete id="delete" parameterType="map">
+		delete accounts where seq_id=#{seq_id} and da_marker=#{da_marker}
+	</delete>
+	<!-- 更新商户或代理商账户信息 -->
+	<update id="updateAccountForMerOfAgent" parameterType="map">
+		update accounts set bank_name=#{chage_three},screen_name=#{chage_two},screen_num=#{chage_one},bank_num=#{chage_four} where seq_id=#{curre_num} and da_marker=#{num_type}
+	</update>
+	<select id="getMap" resultType="map" parameterType="map">
+		select * from accounts where seq_id=#{seq_id} and da_marker=#{type}
+	</select>
+	<update id="updateAccountNo" parameterType="map">
+		update accounts set
+							bank_name=#{bank_name},
+							screen_name=#{screen_name},
+							screen_num=#{screen_num},
+							bank_num=#{bank_num},
+							nature=#{nature},
+							acmoney=#{acmoney},
+							resphone=null,
+							settle_cycle=#{settle_cycle},
+							bank_headname=#{bank_headname},
+							bank_address=#{bank_address},
+							show_resphone=null,
+							show_screennum=#{show_screennum},
+							screen_idnum=null,
+							show_screenidnum=null,
+							area_name=#{area_name}
+		where seq_id=#{merno} and da_marker=#{da_marker}
+	</update>
+	<select id="getchengeMap" resultType="map" parameterType="map">
+		select * from merchant_change where serial=#{serial}
+	</select>
+	<update id="updateAccountNo1" parameterType="map">
+		update ACCOUNTS SET
+							BANK_NAME=#{BANK_NAME},
+							SCREEN_NAME=#{SCREEN_NAME},
+							SCREEN_NUM=#{SCREEN_NUM},
+							BANK_NUM=#{BANK_NUM},
+							NATURE=#{NATURE},
+							ACMONEY=#{ACMONEY},
+							RESPHONE=#{RESPHONE},
+							SETTLE_CYCLE=#{SETTLE_CYCLE},
+							BANK_HEADNAME=#{BANK_HEADNAME},
+							BANK_ADDRESS=#{BANK_ADDRESS},
+							SHOW_RESPHONE=#{SHOW_RESPHONE},
+							SHOW_SCREENNUM=#{SHOW_SCREENNUM},
+							SCREEN_IDNUM=null ,
+							SHOW_SCREENIDNUM=null
+		WHERE SEQ_ID=#{MERNO} AND DA_MARKER=#{DA_MARKER}
+	</update>
+	<update id="updateAccount1" parameterType="map">
+		UPDATE ACCOUNTS SET
+							BANK_NAME=#{BANK_NAME},
+							SCREEN_NAME=#{SCREEN_NAME},
+							SCREEN_NUM=#{SCREEN_NUM},
+							BANK_NUM=#{BANK_NUM},
+							NATURE=#{NATURE},
+							ACMONEY=#{ACMONEY},
+							RESPHONE=#{RESPHONE},
+							SETTLE_CYCLE=#{SETTLE_CYCLE},
+							BANK_HEADNAME=#{BANK_HEADNAME},
+							BANK_ADDRESS=#{BANK_ADDRESS},
+							SCREEN_IDNUM=#{SCREEN_IDNUM},
+							SHOW_SCREENIDNUM=#{SHOW_SCREENIDNUM},
+							SHOW_RESPHONE=#{SHOW_RESPHONE},
+							SHOW_SCREENNUM=#{SHOW_SCREENNUM}
+		WHERE SEQ_ID=#{MERNO} AND DA_MARKER=#{DA_MARKER}
+	</update>
+	<insert id="saveAccountapp" parameterType="map" >
+		insert into ACCOUNTS(id,
+							 screen_name,
+							 screen_num,
+							 seq_id,
+							 da_marker,
+							 nature,
+							 createman,
+							 createdate,
+							 acmoney,
+							 resphone,
+							 settle_cycle,
+							 bank_headname,
+							 screen_idnum,
+							 show_screenidnum,
+							 show_resphone,
+							 show_screennum)
+		values (seq_accounts.nextval, #{screen_name}, #{screen_num}, #{merno},#{da_marker}, #{nature}, #{createman}, #{createdate},
+				#{acmoney},#{resphone,jdbcType=VARCHAR},#{settle_cycle},
+				#{bank_headname},#{screen_idnum,jdbcType=VARCHAR},#{show_screenidnum,jdbcType=VARCHAR},#{show_resphone,jdbcType=VARCHAR},#{show_screennum})
+	</insert>
+	<update id="updateAccountapp" parameterType="map">
+		update accounts set
+							screen_name=#{screen_name},
+							screen_num=#{screen_num},
+							acmoney=#{acmoney},
+							resphone=#{resphone},
+							settle_cycle=#{settle_cycle},
+							bank_headname=#{bank_headname},
+							screen_idnum=#{screen_idnum},
+							show_screenidnum=#{show_screenidnum},
+							show_resphone=#{show_resphone},
+							show_screennum=#{show_screennum}
+		where seq_id=#{merno} and da_marker=#{da_marker}
+	</update>
+</mapper>

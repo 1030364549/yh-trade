@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    url: jdbc:oracle:thin:@//10.10.70.102:1521/orcl
+    username: ld_web
+    password: ld_web
+    driver-class-name: oracle.jdbc.OracleDriver
+    type: com.alibaba.druid.pool.DruidDataSource
+    initialSize: 5
+    minIdle: 10
+    maxActive: 100
+    maxWait: 60000
+    validationQuery: select 1 from dual
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    testOnBorrow: true
+    testOnReturn: true
+    testWhileIdle: true
+    removeAbandoned: true
+    removeAbandonedTimeout: 1800
+    logAbandoned: true
+    filters: mergeStat
+  redis:
+    database: 0
+    host: 111.202.198.242
+    port: 63792
+    password: yxhd1208
+#自定义配置
+defaultLoadData:
+  #二要素信息接口
+  ldysurl: http://10.10.55.75:8088/commAuth/800003
+  #工商信息接口
+  ldgsurl: http://10.10.55.75:8088/commAuth/800004
+  tradeurl: 10.10.178.87
+  tradeport: 10001
+  pfx: /webtomcat/pfx/
+  #ocr图片识别
+  ocrurl: http://10.10.55.124:8088/OcrWeb/servlet/OcrServlet
+  #人脸识别
+  ldfaceidurl: http://10.10.55.75:8088/commAuth/800002
+  #图片服务器路径
+  imgurl: http://10.10.178.98/
+  #联动四要素工商权建1
+  ldsysgsqjurl: http://10.10.55.75:8088/commAuth/800007
+  #短信接口地址
+  dxurl: http://10.10.55.75:8088/smsParserService/downsms
+  ## 短信参数
+  fun_code: SHOUSHUAPOSP
+  ## 短信参数
+  ret_code: 9999
+  merId: 42233911
+  busiMerId: 42233911
+  #清算协会风险信息接口
+  ldqsxhfxxxurl: http://10.10.55.56:22024

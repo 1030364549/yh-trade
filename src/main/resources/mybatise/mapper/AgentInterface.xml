@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AgentInterface">
+    <!-- 根据机构编号查询机构接口配置信息 -->
+    <select id="getAgentInterfaceByAgentNum" parameterType="map" resultType="map">
+        select a.agent_num,a.agent_name,ai.agent_key,ai.allow_interface from agent_info a
+        left join agent_interface ai on a.agent_num = ai.agent_num
+        where a.agent_num = #{agent_num}
+    </select>
+    <update id="saveAgentInterface" parameterType="map">
+        merge into agent_interface t1
+        using (select #{agent_num} agent_num, #{agent_name} agent_name, #{agent_key} agent_key, #{allow_interface} allow_interface from dual) t2
+        on (t1.agent_num = t2.agent_num)
+        when matched then
+             update set t1.allow_interface = t2.allow_interface
+        when not matched then
+             insert values (t2.agent_num, t2.agent_name, t2.agent_key, t2.allow_interface)
+    </update>
+
+    <select id="selectInterfaceInfo" resultType="map">
+        select * from baseinfo
+        where class_en = 'allowInterface'
+    </select>
+
+    <select id="getInterface" resultType="map" parameterType="map">
+        SELECT * FROM  baseinfo where class_en = 'allowInterface'
+        <if test="id != null and id != ''">
+            and id = #{id}
+        </if>
+    </select>
+
+    <insert id="insertInterface" parameterType="map">
+        INSERT INTO  baseinfo(ID,CLASS_EN,VALUE,TEXT,ADDNAME,ADDTIME)
+        VALUES (seq_baseinfo.nextval,'allowInterface',#{value},#{text},#{addname},#{addtime})
+    </insert>
+    <update id="updateInterface" parameterType="map">
+        UPDATE baseinfo SET
+        value = #{value},
+        taxt = #{text}
+        WHERE id= #{id} and class_en= 'allowInterface'
+    </update>
+</mapper>

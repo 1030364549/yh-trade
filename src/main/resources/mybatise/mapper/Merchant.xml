@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Merchant">
+    <!--根据登录机构查询商户信息-->
+    <select id="getMerchantList" resultType="map" parameterType="Page">
+        select mi.merno,mi.mer_name,mi.mer_category,mi.mer_address,mi.legal_name,mi.legal_cer,mi.show_legalcerno,mi.trad_status,
+               mi.add_date,mi.add_time,mi.org_merno,mi.picture,mi.agent_no,mi.show_linkphone,mi.settle_cycle,mi.org_serial, ms.merno as merchant_schedule
+        from merchant_info mi
+        left join merchant_schedule ms on mi.merno = ms.merno
+        <where>
+            1 = 1
+            <if test="params.obj_no!=null and params.obj_no!=''">
+                and to_char(mi.agent_no) = #{params.obj_no}
+            </if>
+            <if test="params.add_date!=null and params.add_date!=''">
+                and mi.add_date = #{params.add_date}
+            </if>
+            <if test="params.merno!=null and params.merno!=''">
+                and to_char(mi.merno) = #{params.merno}
+            </if>
+            <if test="params.org_serial!=null and params.org_serial!=''">
+                and to_char(mi.org_serial) = #{params.org_serial}
+            </if>
+            <if test="params.mer_name!=null and params.mer_name!=''">
+                and mi.mer_name like '%'||#{params.mer_name}||'%'
+            </if>
+            <if test="params.agent_num != null and params.agent_num != ''">
+                and mi.agent_no = #{params.agent_num}
+            </if>
+            <if test="params.trad_status != null and params.trad_status != ''">
+                and mi.trad_status = #{params.trad_status}
+            </if>
+        </where>
+    </select>
+    <!--变更商户状态-->
+    <update id="change" parameterType="map">
+        update merchant_info set trad_status = decode(trad_status,1,0,0,1)
+        <where>
+            merno=#{merno}
+            <if test="obj_no!=null and obj_no!=''">
+                and to_char(agent_no) = #{obj_no}
+            </if>
+        </where>
+    </update>
+
+    <!--商户结算信息查询-->
+    <select id="getSettlement" parameterType="Map" resultType="map">
+        select a.id,a.bank_name,a.screen_name,a.screen_num,a.bank_num,a.seq_id,a.da_marker,a.nature,a.createman,a.createdate,a.note,a.acmoney,a.resphone,a.settle_cycle,
+               a.bank_headname,a.bank_address,a.screen_idnum,a.show_screenidnum,a.show_resphone,a.show_screennum,a.picno,a.area_name,a.bottom_pic
+        from accounts a inner join merchant_info b on a.seq_id = b.merno
+        where b.merno = #{merno}
+        <if test="obj_no!=null and obj_no!=''">
+            and to_char(b.agent_no) = #{obj_no}
+        </if>
+    </select>
+
+    <!--商户工商信息查询-->
+    <select id="getMerchantSchedule" parameterType="Map" resultType="map">
+        select ms.* from
+        merchant_schedule ms
+        left join merchant_info mi on ms.merno = mi.merno
+        where ms.merno = #{merno}
+        <if test="obj_no!=null and obj_no!=''">
+            and to_char(mi.agent_no) = #{obj_no}
+        </if>
+    </select>
+    <!--商户图片信息查询-->
+    <select id="getImgAddress" parameterType="Map" resultType="map">
+        select ci.* from
+        client_img ci
+        left join merchant_info mi on ci.clientno = mi.merno
+        where mi.merno = #{merno} and ci.type = -1
+        <if test="obj_no!=null and obj_no!=''">
+            and to_char(mi.agent_no) = #{obj_no}
+        </if>
+    </select>
+</mapper>

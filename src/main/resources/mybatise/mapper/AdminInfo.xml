@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AdminInfo">
+	<!-- 登录 -->
+	<select id="HFAdminLogin" resultType="com.yh.entity.AdminInfo" parameterType="map">
+		select admin_id,admin_name,admin_realname,admin_pass,admin_intro,att,is_admin,belong,obj_no from admin_info
+		where admin_name=#{admin_name} and belong=#{belong} and att = 0
+	</select>
+
+	<!-- 修改用户状态 -->
+	<update id="HFUpdateAdminSattus" parameterType="map">
+		update admin_info set att=#{att} where admin_id=#{admin_id}
+	</update>
+
+	<!-- 根据用户名获取用户数量 -->
+	<select id="getCountByName" resultType="int" parameterType="map">
+		select count(*) from admin_info where admin_name=#{admin_name,jdbcType=VARCHAR}
+		<if test="belong != null">
+			and belong=#{belong,jdbcType=NUMBER}
+		</if>
+	</select>
+
+	<!-- 添加用户 -->
+	<insert id="saveUser" parameterType="map">
+        insert into admin_info(admin_id,admin_name,admin_realname,admin_pass,admin_intro,att,is_admin,belong,add_man,add_time,obj_no)
+		values(seq_admin_info.nextval,#{admin_name},#{admin_realname},#{admin_pass},#{admin_intro},#{att},#{is_admin},#{belong},#{add_man},#{add_time},#{obj_no})
+    </insert>
+
+	
+	<!-- 更新用户信息 -->
+	<update id="updateAdminInfo" parameterType="map">
+		update admin_info set admin_realname=#{admin_realname},admin_intro=#{admin_intro} where admin_id=#{admin_id}
+	</update>
+	
+	<!-- 根据用户ID查询用户信息 -->
+	<select id="getAdminInfoById" resultType="com.yh.entity.AdminInfo" parameterType="int">
+		select admin_id,admin_name,admin_realname,admin_pass,admin_intro,att,is_admin from admin_info where admin_id=#{admin_id}
+	</select>
+	
+	<!-- 删除用户信息 -->
+	<delete id="delUserInfo" parameterType="int">
+		delete from admin_info where admin_id=#{admin_id}
+	</delete>
+	
+	<!-- 重置用户密码 -->
+	<update id="updateAdminPass" parameterType="map">
+		update admin_info set admin_pass=#{admin_pass} where admin_id=#{admin_id}
+	</update>
+
+	<!-- 查询当前登录用户的按钮权限 -->
+	<select id="getButtonsByAdmin" parameterType="map" resultType="map">
+		select bt_id,bt_name,bt_href,carte_id,rel from buttons where bt_id in (
+			select gn_id from sys_role_qx where gn_type=#{gn_type1} and role_id in (select role_id from sys_role_user where admin_id=#{admin_id})
+		)
+	</select>
+
+	<!-- 根据用户ID查询用户信息 -->
+	<select id="getAdminById" resultType="map" parameterType="map">
+		select admin_id,admin_name,admin_realname,admin_pass,admin_intro,att,is_admin from admin_info where admin_id=#{adminId}
+	</select>
+
+    <!-- 获取Shrio权限资源[菜单\按钮] -->
+    <select id="getShiroList" resultType="map" parameterType="map">
+        select rel from back_carte where belong_terrace=#{belong_terrace}
+        <if test="is_admin!=0">
+          and id in (
+            select gn_id from sys_role_qx where gn_type=#{gn_type0} and role_id in (select role_id from sys_role_user where admin_id=#{admin_id})
+            )
+        </if>
+        union
+        select rel from buttons where 1=1
+        <if test="is_admin!=0">
+            and bt_id in (
+              select gn_id from sys_role_qx where gn_type=#{gn_type1} and role_id in (select role_id from sys_role_user where admin_id=#{admin_id})
+            )
+        </if>
+        and carte_id in (
+            select id from back_carte where belong_terrace=#{belong_terrace}
+            <if test="is_admin!=0">
+                and id in (
+                  select gn_id from sys_role_qx where gn_type=#{gn_type0} and role_id in (select role_id from sys_role_user where admin_id=#{admin_id})
+                )
+            </if>
+        )
+    </select>
+
+	<!-- 获取登录用户序列 -->
+	<select id="getAdminIdBySeq" resultType="int">
+		select seq_admin_info.nextval from dual
+	</select>
+
+	<!-- 添加代理商登录用户 -->
+	<insert id="saveAdminInfoId" parameterType="map">
+        insert into admin_info(admin_id,admin_name,admin_realname,admin_pass,admin_intro,att,is_admin,belong,add_man,add_time,obj_no)
+		values(#{admin_id},#{admin_name},#{admin_realname},#{admin_pass},#{admin_intro},#{att},#{is_admin},#{belong},#{add_man},#{add_time},#{obj_no})
+    </insert>
+
+	<!-- 注销业务员账号 -->
+	<update id="updateStatusBySale" parameterType="map">
+		update admin_info set att=#{att} where is_admin=#{is_admin} and obj_no=#{obj_no}
+	</update>
+
+	<!-- 删除代理商或业务员的登录用户 -->
+	<delete id="deleteAdminByObj" parameterType="map">
+		delete from admin_info where belong=#{belong} and obj_no=#{obj_no}
+	</delete>
+
+	<!-- 根据对象编号\标识 修改状态 -->
+	<update id="updateStatusByObj" parameterType="map">
+		update admin_info set att=#{att} where belong=#{belong} and obj_no=#{obj_no}
+	</update>
+
+	<!-- 获取用户列表 -->
+	<select id="getPageList" resultType="map" parameterType="Page">
+		select a.admin_id,a.admin_name,a.admin_realname,a.admin_pass, a.admin_intro, a.att,
+		a.is_admin, a.belong, a.add_man, a.add_time, a.obj_no,b.role_count
+		from admin_info a
+		left join (select admin_id,count(0) as role_count from sys_role_user group by admin_id) b on a.admin_id = b.admin_id
+		<where>
+			a.belong = 3
+			<!-- 用户编号 -->
+			<if test="params.admin_name!=null and params.admin_name!=''">
+				and a.admin_name=#{params.admin_name}
+			</if>
+			<!-- 机构编号 -->
+			<if test="params.obj_no!=null and params.obj_no!=''">
+				and to_char(a.obj_no) = #{params.obj_no}
+			</if>
+			<!-- 机构编号 -->
+			<if test="params.agent_num!=null and params.agent_num!=''">
+				and to_char(a.obj_no) = #{params.agent_num}
+			</if>
+			<!-- 用户真实名称 -->
+			<if test="params.admin_realname!=null and params.admin_realname!=''">
+				and a.admin_realname like '%${params.admin_realname}%'
+			</if>
+			<!-- 用户状态 -->
+			<if test="params.att!=null and params.att!=''">
+				and to_char(a.att) = #{params.att}
+			</if>
+			<!-- 添加时间（开始） -->
+			<if test="params.start_time!=null and params.start_time!=''">
+				and a.add_time <![CDATA[>=]]> #{params.start_time}
+			</if>
+			<!-- 添加时间（截止） -->
+			<if test="params.end_time!=null and params.end_time!=''">
+				and a.add_time <![CDATA[<=]]> #{params.end_time}
+			</if>
+		</where>
+		order by a.admin_id desc
+	</select>
+
+	<!-- 启用/停用 -->
+	<update id="updateAdminAtt" parameterType="map">
+		update admin_info set att = decode(att,1,0,0,1)
+		<where>
+			to_char(admin_id)=#{id}
+			<!-- 机构编号 -->
+			<if test="obj_no!=null and obj_no!=''">
+				and obj_no = #{obj_no}
+			</if>
+		</where>
+	</update>
+	<!-- 重置密码 -->
+	<update id="updateAdminPassword" parameterType="map">
+		update admin_info set ADMIN_PASS = 'c984aed014aec7623a54f0591da07a85fd4b762d'
+		<where>
+			to_char(admin_id)=#{id}
+			<!-- 机构编号 -->
+			<if test="obj_no!=null and obj_no!=''">
+				and obj_no = #{obj_no}
+			</if>
+		</where>
+	</update>
+	<insert id="saveAdminInfo" parameterType="map">
+		insert into admin_info(admin_id, ADMIN_NAME, ADMIN_REALNAME, ADMIN_PASS, ADMIN_INTRO, ATT, IS_ADMIN,
+		BELONG, ADD_MAN, ADD_TIME, OBJ_NO)
+		values (
+			SEQ_ADMIN_INFO.nextval,#{admin_name},#{admin_realname},'c984aed014aec7623a54f0591da07a85fd4b762d',#{admin_intro},1,#{is_admin},
+			3,#{add_man},#{add_time},#{obj_no}
+		)
+	</insert>
+	<select id="getAdminByAgentInfo" parameterType="map" resultType="map">
+		select admin_name from admin_info where obj_no = #{agent_num} order by admin_id desc
+	</select>
+</mapper>

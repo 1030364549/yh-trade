@@ -1,0 +1,10 @@
+#文件保存目录
+filepath=/webtomcat/errorExcel/
+filetemp=/webtomcat/errorExcel/temp/
+filetempapp=/webtomcat/errorExcel/temp/
+picrequestip=http://39.96.48.139:8099
+fileBMD=/webtomcat/dmBMD/temp/
+#filepath=E:\\errorExcel\\
+#filetemp=E:\\errorExcel\\temp\\
+#filetempapp=D:/errorExcel/temp/
+invoiceFile=D:/profitSettBill/temp/

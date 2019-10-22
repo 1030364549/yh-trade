@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases>
+		<typeAlias alias="map" type="java.util.Map"/>
+		<typeAlias alias="String" type="java.lang.String"/>
+		<typeAlias alias="int" type="java.lang.Integer"/>
+		<typeAlias alias="Page" type="com.yh.entity.Page"/>
+		<typeAlias alias="double" type="java.lang.Double"/>
+		<typeAlias alias="long" type="java.lang.Long"/>
+	</typeAliases>
+
+
+
+	<!-- 拦截器 -->
+	<plugins>
+		<plugin interceptor="com.yh.util.PageInterceptor">
+			<property name="databaseType" value="oracle"/>
+			<property name="printSql" value="1"/><!-- 自定义 是否打印sql语句 -->
+			<property name="writeSqlLog" value="1"/><!--自定义 是否存储sql语句日志 -->
+		</plugin>
+	</plugins>
+	<!-- 映射文件 -->
+
+</configuration>

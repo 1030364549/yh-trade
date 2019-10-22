@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="Terminal">
+    <!--终端信息查询-->
+    <select id="getTerminalList" parameterType="Page" resultType="map">
+       select
+       a.id, a.posno, a.createman, to_char(a.createdate,'yyyy-mm-dd hh:mi:ss') createdate, a.merno, a.agent_num, b.mer_name, c.agent_name, d.tmk
+       from formal_pos a
+       left join merchant_info b on a.merno = b.merno
+       left join agent_info c on a.agent_num = c.agent_num
+        left join pos_key d on a.merno = d.merno and a.posno = d.terno
+        <where>
+            a.pos_type = 3
+            <!-- 机构限制 -->
+            <if test="params.obj_no!=null and params.obj_no!=''">
+                and to_char(a.agent_num) = #{params.obj_no}
+            </if>
+            <!-- 代理商编号 -->
+            <if test="params.agent_num!=null and params.agent_num!=''">
+                and to_char(a.agent_num)=#{params.agent_num}
+            </if>
+            <!-- 代理商名称 -->
+            <if test="params.agent_name!=null and params.agent_name!=''">
+                and c.agent_name like '%${params.agent_name}%'
+            </if>
+            <!-- 商户编号 -->
+            <if test="params.merno!=null and params.merno!=''">
+                and to_char(a.merno)=#{params.merno}
+            </if>
+            <!-- 商户名称 -->
+            <if test="params.mer_name!=null and params.mer_name!=''">
+                and b.mer_name like '%${params.mer_name}%'
+            </if>
+            <!-- 终端编号 -->
+            <if test="params.posno!=null and params.posno!=''">
+                and to_char(a.posno) = #{params.posno}
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="params.start_createdate!=null and params.start_createdate!=''">
+                and a.createdate <![CDATA[>=]]> to_date(#{params.start_createdate},'yyyy-mm-dd ')
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="params.end_createdate!=null and params.end_createdate!=''">
+                and a.createdate <![CDATA[<=]]> to_date(#{params.end_createdate},'yyyy-mm-dd ')
+            </if>
+            <!-- 添加人 -->
+            <if test="params.createman!=null and params.createman!=''">
+                and a.createman like '%${params.createman}%'
+            </if>
+        </where>
+        order by a.id desc
+    </select>
+    <!--终端信息查询-->
+    <select id="getExportExcelList" parameterType="map" resultType="map">
+        select
+        a.id, a.posno, a.createman, to_char(a.createdate,'yyyy-mm-dd hh:mi:ss') createdate, a.merno, a.agent_num, b.mer_name, c.agent_name, d.tmk
+        from formal_pos a
+        left join merchant_info b on a.merno = b.merno
+        left join agent_info c on a.agent_num = c.agent_num
+        left join pos_key d on a.merno = d.merno and a.posno = d.terno
+        <where>
+            a.pos_type = 3
+            <!-- 机构限制 -->
+            <if test="obj_no!=null and obj_no!=''">
+                and to_char(a.agent_num) = #{obj_no}
+            </if>
+            <!-- 代理商编号 -->
+            <if test="agent_num!=null and agent_num!=''">
+                and to_char(a.agent_num)=#{agent_num}
+            </if>
+            <!-- 代理商名称 -->
+            <if test="agent_name!=null and agent_name!=''">
+                and c.agent_name like '%${agent_name}%'
+            </if>
+            <!-- 商户编号 -->
+            <if test="merno!=null and merno!=''">
+                and to_char(a.merno)=#{merno}
+            </if>
+            <!-- 商户名称 -->
+            <if test="mer_name!=null and mer_name!=''">
+                and b.mer_name like '%${mer_name}%'
+            </if>
+            <!-- 终端编号 -->
+            <if test="posno!=null and posno!=''">
+                and to_char(a.posno) = #{posno}
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="start_createdate!=null and start_createdate!=''">
+                and a.createdate <![CDATA[>=]]> to_date(#{start_createdate},'yyyy-mm-dd ')
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="end_createdate!=null and end_createdate!=''">
+                and a.createdate <![CDATA[<=]]> to_date(#{end_createdate},'yyyy-mm-dd ')
+            </if>
+            <!-- 添加人 -->
+            <if test="createman!=null and createman!=''">
+                and a.createman like '%${createman}%'
+            </if>
+        </where>
+        order by a.id desc
+    </select>
+</mapper>

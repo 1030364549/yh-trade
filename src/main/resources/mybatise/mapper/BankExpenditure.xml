@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BankExpenditure">
+    <!--交易信息查询-->
+    <select id="getPageList" parameterType="Page" resultType="map">
+      select be.*,ai.agent_name,ai.agent_num,mi.merno,mi.mer_name from bank_expenditure be
+      left join formal_pos fp on fp.posno = be.terno and fp.pos_type = '3'
+      left join merchant_info mi on mi.merno = be.mer_no
+      left join agent_info ai on ai.agent_num = mi.agent_no
+      <where>
+          (ai.agent_nature = 2 OR ai.agent_nature = 9)
+          <!-- 如果不是顶级机构 限制查询本机构 -->
+          <if test="params.obj_no != null and params.obj_no != ''">
+              and to_char(ai.agent_num) = #{params.obj_no}
+          </if>
+          <!-- 机构编号 -->
+          <if test="params.agent_num != null and params.agent_num != ''">
+              and to_char(ai.agent_num) = #{params.agent_num}
+          </if>
+          <!-- 机构名称 -->
+          <if test="params.agent_name != null and params.agent_name != ''">
+              and ai.agent_name like '%${params.agent_name}%'
+          </if>
+          <!-- 商户编号 -->
+          <if test="params.merno != null and params.merno != ''">
+              and to_char(mi.merno) = #{params.merno}
+          </if>
+          <!-- 商户名称 -->
+          <if test="params.mer_name != null and params.mer_name != ''">
+              and mi.mer_name like '%${params.mer_name}%'
+          </if>
+          <!-- 交易流水号 -->
+          <if test="params.serial != null and params.serial != ''">
+              and to_char(be.serial) = #{params.serial}
+          </if>
+          <!-- 交易终端号 -->
+          <if test="params.terno != null and params.terno != ''">
+              and to_char(be.terno) = #{params.terno}
+          </if>
+          <!-- 卡类型 -->
+          <if test="params.cardtype != null and params.cardtype != ''">
+              and to_char(be.cardtype) = #{params.cardtype}
+          </if>
+          <!-- 结算类型 -->
+          <if test="params.sett_type != null and params.sett_type != ''">
+              and to_char(be.sett_type) = #{params.sett_type}
+          </if>
+          <!-- 清算状态 -->
+          <if test="params.au_state != null and params.au_state != ''">
+              and to_char(be.au_state) = #{params.au_state}
+          </if>
+          <!-- 对账状态 -->
+          <if test="params.bi_state != null and params.bi_state != ''">
+              and to_char(be.bi_state) = #{params.bi_state}
+          </if>
+          <!-- 添加时间（开始） -->
+          <if test="params.start_localdate!=null and params.start_localdate!=''">
+              and be.localdate <![CDATA[>=]]> #{params.start_localdate}
+          </if>
+          <!-- 添加时间（截止） -->
+          <if test="params.end_localdate!=null and params.end_localdate!=''">
+              and be.localdate <![CDATA[<=]]> #{params.end_localdate}
+          </if>
+      </where>
+    </select>
+    <!--交易信息查询-->
+    <select id="getExportExcelList" parameterType="map" resultType="map">
+        select be.*,ai.agent_name,ai.agent_num,mi.merno,mi.mer_name from bank_expenditure be
+        left join formal_pos fp on fp.posno = be.terno and fp.pos_type = '3'
+        left join merchant_info mi on mi.merno = be.mer_no
+        left join agent_info ai on ai.agent_num = mi.agent_no
+        <where>
+            (ai.agent_nature = 2 OR ai.agent_nature = 9)
+            <!-- 如果不是顶级机构 限制查询本机构 -->
+            <if test="obj_no != null and obj_no != ''">
+                and to_char(ai.agent_num) = #{obj_no}
+            </if>
+            <!-- 机构编号 -->
+            <if test="agent_num != null and agent_num != ''">
+                and to_char(ai.agent_num) = #{agent_num}
+            </if>
+            <!-- 机构名称 -->
+            <if test="agent_name != null and agent_name != ''">
+                and ai.agent_name like '%${agent_name}%'
+            </if>
+            <!-- 商户编号 -->
+            <if test="merno != null and merno != ''">
+                and to_char(mi.merno) = #{merno}
+            </if>
+            <!-- 商户名称 -->
+            <if test="mer_name != null and mer_name != ''">
+                and mi.mer_name like '%${mer_name}%'
+            </if>
+            <!-- 交易流水号 -->
+            <if test="serial != null and serial != ''">
+                and to_char(be.serial) = #{serial}
+            </if>
+            <!-- 交易终端号 -->
+            <if test="terno != null and terno != ''">
+                and to_char(be.terno) = #{terno}
+            </if>
+            <!-- 卡类型 -->
+            <if test="cardtype != null and cardtype != ''">
+                and to_char(be.cardtype) = #{cardtype}
+            </if>
+            <!-- 结算类型 -->
+            <if test="sett_type != null and sett_type != ''">
+                and to_char(be.sett_type) = #{sett_type}
+            </if>
+            <!-- 清算状态 -->
+            <if test="au_state != null and au_state != ''">
+                and to_char(be.au_state) = #{au_state}
+            </if>
+            <!-- 对账状态 -->
+            <if test="bi_state != null and bi_state != ''">
+                and to_char(be.bi_state) = #{bi_state}
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="start_localdate!=null and start_localdate!=''">
+                and be.localdate <![CDATA[>=]]> #{start_localdate}
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="end_localdate!=null and end_localdate!=''">
+                and be.localdate <![CDATA[<=]]> #{end_localdate}
+            </if>
+        </where>
+    </select>
+    <select id="statistics" parameterType="page" resultType="map">
+       select
+        ai.agent_num,ai.agent_name,be.localdate,
+        count(0) total,
+        sum(nvl(amount,0) * 0.01) amount,
+        count(decode(tb.ratetype,2,1,null)) as reduction_total,
+        sum(decode(tb.ratetype,2,nvl(amount,0) * 0.01,null)) as reduction_amount,
+        count(decode(tb.ratetype,3,1,null)) as special_total,
+        sum(decode(tb.ratetype,3,nvl(amount,0) * 0.01,null)) as special_amount,
+        count(decode(tb.ratetype,4,1,null)) as discount_total,
+        sum(decode(tb.ratetype,4,nvl(amount,0) * 0.01,null)) as discount_amount,
+        count(decode(tb.ratetype,5,1,null)) as standard_total,
+        sum(decode(tb.ratetype,5,nvl(amount,0) * 0.01,null)) as standard_amount,
+        count(decode(be.cardtype,1,1,null)) as debit_total,
+        sum(decode(be.cardtype,1,nvl(amount,0) * 0.01,null)) as debit_amount,
+        count(decode(be.cardtype,2,1,null)) as credit_total,
+        sum(decode(be.cardtype,2,nvl(amount,0) * 0.01,null)) as credit_amount
+       from
+       bank_expenditure be
+       left join t_bankinfo tb on be.bno = tb.bno
+       left join merchant_info mi on be.mer_no= mi.merno
+       left join agent_info ai on mi.agent_no = ai.agent_num
+        <where>
+            (ai.agent_nature = 2 OR ai.agent_nature = 9)
+            <!-- 如果不是顶级机构 限制查询本机构 -->
+            <if test="params.obj_no != null and params.obj_no != ''">
+                and to_char(ai.agent_num) = #{params.obj_no}
+            </if>
+            <!-- 机构编号 -->
+            <if test="params.agent_num != null and params.agent_num != ''">
+                and to_char(ai.agent_num) = #{params.agent_num}
+            </if>
+            <!-- 机构名称 -->
+            <if test="params.agent_name != null and params.agent_name != ''">
+                and ai.agent_name like '%${params.agent_name}%'
+            </if>
+            <!-- 交易时间（开始） -->
+            <if test="params.start_localdate!=null and params.start_localdate!=''">
+                and be.localdate <![CDATA[>=]]> #{params.start_localdate}
+            </if>
+            <!-- 交易时间（截止） -->
+            <if test="params.end_localdate!=null and params.end_localdate!=''">
+                and be.localdate <![CDATA[<=]]> #{params.end_localdate}
+            </if>
+        </where>
+       group by be.localdate,ai.agent_num,ai.agent_name
+        order by be.localdate DESC
+    </select>
+
+    <select id="getStatisticsExportExcelList" parameterType="map" resultType="map">
+        select
+        ai.agent_num,ai.agent_name,be.localdate,
+        count(0) total,
+        sum(nvl(amount,0) * 0.01) amount,
+        count(decode(tb.ratetype,2,1,null)) as reduction_total,
+        sum(decode(tb.ratetype,2,nvl(amount,0) * 0.01,null)) as reduction_amount,
+        count(decode(tb.ratetype,3,1,null)) as special_total,
+        sum(decode(tb.ratetype,3,nvl(amount,0) * 0.01,null)) as special_amount,
+        count(decode(tb.ratetype,4,1,null)) as discount_total,
+        sum(decode(tb.ratetype,4,nvl(amount,0) * 0.01,null)) as discount_amount,
+        count(decode(tb.ratetype,5,1,null)) as standard_total,
+        sum(decode(tb.ratetype,5,nvl(amount,0) * 0.01,null)) as standard_amount,
+        count(decode(be.cardtype,1,1,null)) as debit_total,
+        sum(decode(be.cardtype,1,nvl(amount,0) * 0.01,null)) as debit_amount,
+        count(decode(be.cardtype,2,1,null)) as credit_total,
+        sum(decode(be.cardtype,2,nvl(amount,0) * 0.01,null)) as credit_amount
+        from
+        bank_expenditure be
+        left join t_bankinfo tb on be.bno = tb.bno
+        left join merchant_info mi on be.mer_no= mi.merno
+        left join agent_info ai on mi.agent_no = ai.agent_num
+        <where>
+            (ai.agent_nature = 2 OR ai.agent_nature = 9)
+            <!-- 如果不是顶级机构 限制查询本机构 -->
+            <if test="obj_no != null and obj_no != ''">
+                and to_char(ai.agent_num) = #{obj_no}
+            </if>
+            <!-- 机构编号 -->
+            <if test="agent_num != null and agent_num != ''">
+                and to_char(ai.agent_num) = #{agent_num}
+            </if>
+            <!-- 机构名称 -->
+            <if test="agent_name != null and agent_name != ''">
+                and ai.agent_name like '%${agent_name}%'
+            </if>
+            <!-- 交易时间（开始） -->
+            <if test="start_localdate!=null and start_localdate!=''">
+                and be.localdate <![CDATA[>=]]> #{start_localdate}
+            </if>
+            <!-- 交易时间（截止） -->
+            <if test="end_localdate!=null and end_localdate!=''">
+                and be.localdate <![CDATA[<=]]> #{end_localdate}
+            </if>
+        </where>
+        group by be.localdate,ai.agent_num,ai.agent_name
+        order by be.localdate DESC
+    </select>
+</mapper>

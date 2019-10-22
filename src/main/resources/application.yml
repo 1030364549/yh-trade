@@ -1,0 +1,81 @@
+server:
+  port: 10080
+  tomcat:
+    uri-encoding: UTF-8
+  context-path: /yhtrade
+#111.202.198.242:51521/dba
+#10.10.70.102:1521/orcl
+spring:
+  profiles:
+    active: @spring.profiles.active@
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+    multipart:
+      enabled: true
+      maxFileSize: 1000MB
+      maxRequestSize: 1000MB
+  messages:
+    encoding: UTF-8
+  freemarker:
+    template-loader-path: classpath:/webview
+    settings:
+      number_format: 0.##
+    cache: false    #页面不加载缓存，修改即时生效
+  mvc:
+    static-path-pattern: /public/**
+  aop:
+    auto: true
+  thymeleaf:
+    cache: false
+
+mybatis:
+  type-aliases-package: com.yh.entity
+  mapper-locations: classpath:mybatise/mapper/*.xml
+  configLocation: classpath:mybatise/sqlMapConfig.xml
+
+logging:
+  config: classpath:log4j2.xml
+
+jedis:
+  pool:
+    maxTotal: 200
+    minIdle: 50
+    maxIdle: 100
+    testOnBorrow: true
+    testOnReturn: true
+    maxWaitMillis: 1500
+
+project:
+  tranddelMax: 200000
+
+#自定义配置
+defaultLoadData:
+  #二要素信息接口
+  ldysurl: http://10.10.55.75:8088/commAuth/800003
+  #工商信息接口
+  ldgsurl: http://10.10.55.75:8088/commAuth/800004
+  tradeurl: 10.10.70.102
+  tradeport: 10001
+  pfx: /webtomcat/pfx/
+  #ocr图片识别
+  ocrurl: http://10.10.55.124:8180/OcrWeb/servlet/OcrServlet
+  #人脸识别
+  ldfaceidurl: http://10.10.55.75:8088/commAuth/800002
+  #图片服务器路径
+  imgurl: http://10.10.178.98/
+  #联动四要素工商权建1
+  ldsysgsqjurl: http://10.10.55.75:8088/commAuth/800007
+  #短信接口地址
+  dxurl: http://10.10.55.75:8088/smsParserService/downsms
+  ## 短信参数
+  fun_code: SHOUSHUAPOSP
+  ## 短信参数
+  ret_code: 9999
+
+  merId: 42233911
+  busiMerId: 42233911
+  #清算协会风险信息接口
+  ldqsxhfxxxurl: http://10.10.55.56:22024

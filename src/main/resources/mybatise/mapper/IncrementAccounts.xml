@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="IncrementAccounts">
+    <!--查询增值账户-->
+    <select id="getPageList" parameterType="Page" resultType="map">
+        select a.agent_num,a.insurance_amount,a.message_amount,a.amount,a.is_currency,a.agent_name from increment_accounts a
+        left join agent_info b on b.agent_num = a.agent_num
+        <where>
+            <!-- 机构状态 -->
+            b.agent_nature = 2
+            <!-- 非顶级机构 -->
+            <if test="params.obj_no!=null and params.obj_no!=''">
+                and a.agent_num=#{params.obj_no}
+            </if>
+            <!-- 代理商编号 -->
+            <if test="params.agent_num!=null and params.agent_num!=''">
+                and a.agent_num=#{params.agent_num}
+            </if>
+            <!-- 代理商名称 -->
+            <if test="params.agent_name!=null and params.agent_name!=''">
+                and a.agent_name like '%${params.agent_name}%'
+            </if>
+        </where>
+        order by a.agent_num desc
+    </select>
+    <!--查询一个增值账户-->
+    <select id="getIncrementAccountsOne" resultType="map" parameterType="map">
+        select a.agent_num,a.insurance_amount,a.message_amount,a.amount,a.is_currency,a.agent_name from increment_accounts a
+        <where>
+            a.agent_num=#{agent_num}
+        </where>
+    </select>
+    <!--更新余额-->
+    <update id="updateBalance" parameterType="map">
+        update increment_accounts set
+        <if test='insurance_type=="3"'>
+            AMOUNT =  decode(sign(AMOUNT + #{amount}),-1,AMOUNT,1,AMOUNT + #{amount})
+        </if>
+        <if test='insurance_type=="2"'>
+            MESSAGE_AMOUNT = decode(sign(MESSAGE_AMOUNT + #{amount}),-1,MESSAGE_AMOUNT,1,MESSAGE_AMOUNT + #{amount}),
+
+            AMOUNT = decode(sign(MESSAGE_AMOUNT),-1,AMOUNT,1,AMOUNT + #{amount})
+        </if>
+        <if test='insurance_type=="1"'>
+            INSURANCE_AMOUNT = decode(sign(INSURANCE_AMOUNT + #{amount}),-1,INSURANCE_AMOUNT,1,INSURANCE_AMOUNT + #{amount}),
+
+            AMOUNT = decode(sign(INSURANCE_AMOUNT+ #{amount}),-1,AMOUNT,1,AMOUNT + #{amount})
+        </if>
+        where AGENT_NUM = #{agent_num}
+        <!--非顶级机构-->
+        <if test="obj_no!=null and obj_no!=''">
+            and AGENT_NUM != #{obj_no}
+        </if>
+
+    </update>
+    <!--保存账户-->
+    <insert id="saveAccounts" parameterType="map">
+        insert into increment_accounts(agent_num,
+        <if test="insurance_amount != null">
+            insurance_amount,
+        </if>
+        <if test="message_amount != null">
+            message_amount,
+        </if>
+        <if test="amount != null">
+            amount,
+        </if>
+          is_currency, agent_name) VALUES
+        (#{agent_num},
+        <if test="insurance_amount != null">
+            #{insurance_amount},
+        </if>
+        <if test="message_amount != null">
+            #{message_amount},
+        </if>
+        <if test="amount != null">
+            #{amount},
+        </if>
+        #{is_currency},#{agent_name})
+    </insert>
+    <update id="modifyAccounts" parameterType="map">
+        UPDATE increment_accounts SET IS_CURRENCY = #{is_currency} where AGENT_NUM = #{agent_num}
+    </update>
+</mapper>

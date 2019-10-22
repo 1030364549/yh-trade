@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AgentInfo">
+	<!-- 获取机构列表 -->
+	<select id="getPageList" resultType="map" parameterType="Page">
+		select a.agent_num,a.agent_name,a.add_name,a.localdate, a.agent_nature,b.agent_count,c.admin_count,d.incrementAccountStatus from agent_info a
+		left join (select agent_num, count(0) agent_count from agent_related group by agent_num) b on a.agent_num = b.agent_num
+		left join (select obj_no,count(0) admin_count from admin_info group by obj_no) c on a.agent_num = c.obj_no
+		left join (select agent_num,count(agent_num) as incrementAccountStatus from increment_accounts  group by agent_num)d on a.agent_num = d.agent_num
+		<where>
+			(a.agent_nature = 2 OR a.agent_nature = 9)
+			<!-- 非顶级机构 -->
+			<if test="params.obj_no!=null and params.obj_no!=''">
+				and to_char(a.agent_num)=#{params.obj_no}
+			</if>
+			<!-- 代理商编号 -->
+			<if test="params.agent_num!=null and params.agent_num!=''">
+				and to_char(a.agent_num)=#{params.agent_num}
+			</if>
+			<!-- 代理商名称 -->
+			<if test="params.agent_name!=null and params.agent_name!=''">
+				and a.agent_name like '%${params.agent_name}%'
+			</if>
+			<!-- 机构状态 -->
+			<if test="params.agent_nature!=null and params.agent_nature!=''">
+				and to_char(a.agent_nature) = #{params.agent_nature}
+			</if>
+			<!-- 添加时间（开始） -->
+			<if test="params.start_localdate!=null and params.start_localdate!=''">
+				and a.localdate <![CDATA[>=]]> #{params.start_localdate}
+			</if>
+			<!-- 添加时间（截止） -->
+			<if test="params.end_localdate!=null and params.end_localdate!=''">
+				and a.localdate <![CDATA[<=]]> #{params.end_localdate}
+			</if>
+			<!-- 配置成本 -->
+			<if test="params.agent_count!=null and params.agent_count!=''">
+				and b.agent_count <![CDATA[<=]]> #{params.agent_count}
+			</if>
+		</where>
+		order by a.agent_num desc
+	</select>
+	<!-- 获取机构编号 -->
+	<select id="getAgentNum" resultType="int" parameterType="String">
+		select SEQ_AGENT_NUM.nextval from dual
+	</select>
+	<!-- 添加机构 -->
+	<insert id="save" parameterType="map">
+		insert into agent_info (agent_num, agent_name, agent_area, commissary, identity_num, agent_status, add_name,
+		localdate, localtime, agent_nature, organ_code, regist_num, link_man, link_phone, link_email, deposit_money,
+		province, city, profit_type,show_identitynum,begin_valid,end_valid,area_name,agent_level,belong_agent)
+		values (#{merno}, #{agent_name}, #{agent_area}, #{commissary}, #{identity_num}, 0, #{add_name}, #{localdate},
+		#{localtime}, 9, #{organ_code}, #{regist_num}, #{link_man}, #{link_phone}, #{link_email}, #{deposit_money},
+		#{province}, #{city}, 1, #{show_identitynum}, #{begin_valid}, #{end_valid}, #{area_name}, 1, 0)
+	</insert>
+	<!-- 根据机构编号查询 机构和账户 -->
+	<select id="getOne" resultType="map" parameterType="String">
+		select b.*, a.note AS accounts_note,a.id,a.bank_name,a.screen_name,a.screen_num,a.bank_num,a.seq_id,a.da_marker,a.nature,
+		 a.createman,a.createdate,a.acmoney,a.resphone,a.settle_cycle,a.bank_headname,a.bank_address,a.screen_idnum,
+		 a.show_screenidnum,a.show_resphone,a.show_screennum,a.picno,a.area_name,a.bottom_pic
+		from agent_info b
+		left join accounts a on b.agent_num = a.seq_id and a.da_marker= 1
+		<where>
+			to_char(b.agent_num)=#{agent_num}
+			<if test="obj_no!=null and obj_no!=''">
+				and to_char(b.agent_num)=#{obj_no}
+			</if>
+		</where>
+	</select>
+	<!-- 根据机构编号查询 机构 -->
+	<select id="getAgentInfo" resultType="map" parameterType="map">
+		select b.*
+		from agent_info b
+		<where>
+			b.agent_num=#{agent_num}
+			<if test="obj_no != null and obj_no !=''">
+				and to_char(b.agent_num)=#{obj_no}
+			</if>
+		</where>
+	</select>
+	<!-- 机构更新 -->
+	<update id="updateAgent" parameterType="map">
+		update agent_info set
+		   agent_name=#{agent_name},
+		   agent_area=#{agent_area},
+		   commissary=#{commissary},
+		   organ_code=#{organ_code},
+		   regist_num=#{regist_num},
+		   link_man=#{link_man},
+		   link_email=#{link_email},
+		   deposit_money=#{deposit_money},
+		   province=#{province},
+		   city=#{city},
+		   begin_valid=#{begin_valid},
+		   end_valid=#{end_valid},
+		   area_name=#{area_name}
+		<where>
+			agent_num = #{agent_num}
+			<if test="obj_no!=null and obj_no!=''">
+				and agent_num=#{obj_no}
+			</if>
+		</where>
+	</update>
+	<update id="updateAgentType" parameterType="map">
+		update agent_info set agent_nature = decode(agent_nature,2,9,9,2)
+		<where>
+			agent_num=#{id}
+			<if test="obj_no!=null and obj_no!=''">
+				and agent_num=#{obj_no}
+			</if>
+		</where>
+	</update>
+</mapper>

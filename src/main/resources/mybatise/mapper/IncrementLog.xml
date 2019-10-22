@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="IncrementLog">
+    <!--查询充值记录-->
+    <select id="getPageList" parameterType="Page" resultType="map">
+        select a.increment_log_id, a.amount, a.type, a.note, a.insurance_type, a.create_date, a.create_time, a.create_name, a.agent_num, a.agent_name, a.create_id from increment_log a
+        left join agent_info b on b.agent_num = a.agent_num
+        <where>
+            <!-- 机构状态 -->
+            b.agent_nature = 2
+            <!-- 非顶级机构 -->
+            <if test="params.obj_no!=null and params.obj_no!=''">
+                and a.agent_num=#{params.obj_no}
+            </if>
+            <!-- 代理商编号 -->
+            <if test="params.agent_num!=null and params.agent_num!=''">
+                and a.agent_num=#{params.agent_num}
+            </if>
+            <!-- 代理商名称 -->
+            <if test="params.agent_name!=null and params.agent_name!=''">
+                and a.agent_name like '%'||#{params.agent_name}||'%'
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="params.start_localdate!=null and params.start_localdate!=''">
+                and a.create_date <![CDATA[>=]]> #{params.start_localdate}
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="params.end_localdate!=null and params.end_localdate!=''">
+                and a.create_date <![CDATA[<=]]> #{params.end_localdate}
+            </if>
+        </where>
+        order by a.create_date desc,a.create_time desc
+    </select>
+    <!-- 查询服务统计 -->
+    <select id="getPageListGrouping" parameterType="Page" resultType="map">
+        select a.type,a.insurance_type,a.create_date,a.agent_num,a.agent_name,count(a.type) countnum,sum(a.amount) sumamount from increment_log a
+        left join agent_info b on b.agent_num = a.agent_num
+        <where>
+            <!-- 机构状态 -->
+            b.agent_nature = 2
+            <!-- 非顶级机构 -->
+            <if test="params.obj_no!=null and params.obj_no!=''">
+                and a.agent_num=#{params.obj_no}
+            </if>
+            <!-- 代理商编号 -->
+            <if test="params.agent_num!=null and params.agent_num!=''">
+                and a.agent_num=#{params.agent_num}
+            </if>
+            <!-- 代理商名称 -->
+            <if test="params.agent_name!=null and params.agent_name!=''">
+                and a.agent_name like '%'||#{params.agent_name}||'%'
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="params.start_localdate!=null and params.start_localdate!=''">
+                and a.create_date <![CDATA[>=]]> #{params.start_localdate}
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="params.end_localdate!=null and params.end_localdate!=''">
+                and a.create_date <![CDATA[<=]]> #{params.end_localdate}
+            </if>
+            <!-- 类型 -->
+            <if test="params.type!=null and params.type!=''">
+                and a.type = #{params.type}
+            </if>
+            <!--增值服务类型-->
+            <if test="params.insurance_type!=null and params.insurance_type!=''">
+                and a.insurance_type = #{params.insurance_type}
+            </if>
+        </where>
+        group by a.type,a.insurance_type,a.create_date,a.agent_num,a.agent_name
+        order by a.agent_num asc,a.create_date desc
+    </select>
+
+    <!--添加充值记录-->
+    <insert id="addBalanceLog" parameterType="map">
+        INSERT INTO increment_log
+
+                (amount,
+
+                type,
+                <if test="note != null">
+                    note,
+                </if>
+
+                insurance_type,
+
+                create_date,
+
+                create_time,
+
+                create_name,
+
+                agent_num,
+
+                agent_name,
+
+                create_id,
+
+            increment_log_id)
+                VALUES (
+                #{amount},
+
+                #{type},
+                <if test="note != null">
+                  #{note},
+                </if>
+                #{insurance_type},
+
+                #{create_date},
+
+                #{create_time},
+
+                #{create_name},
+
+                #{agent_num},
+
+                 #{agent_name},
+
+                #{create_id},
+
+            SEQ_INCREMENT_ACCOUNTS_LOG.NEXTVAL)
+
+    </insert>
+    <!--Excel表查询-->
+    <select id="getExportExcelList" parameterType="map" resultType="map">
+        SELECT
+        INCREMENT_LOG_ID,AMOUNT,TYPE,NOTE,INSURANCE_TYPE,CREATE_DATE,CREATE_TIME,CREATE_NAME,AGENT_NUM,AGENT_NAME
+        FROM
+        increment_log a
+        <where>
+            <!-- 机构限制 -->
+            <if test="obj_no!=null and obj_no!=''">
+                and a.agent_num = #{obj_no}
+            </if>
+            <!-- 代理商编号 -->
+            <if test="agent_num!=null and agent_num!=''">
+                and a.agent_num=#{agent_num}
+            </if>
+            <!-- 代理商名称 -->
+            <if test="agent_name!=null and agent_name!=''">
+                and agent_name like '%${agent_name}%'
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="start_localdate!=null and start_localdate!=''">
+                and a.create_date <![CDATA[>=]]> #{start_localdate}
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="end_localdate!=null and end_localdate!=''">
+                and a.create_date <![CDATA[<=]]> #{end_localdate}
+            </if>
+        </where>
+        order by a.agent_num desc
+    </select>
+
+    <select id="getExportExcelListStatistics" parameterType="map" resultType="map">
+        select a.type,a.insurance_type,a.create_date,a.agent_num,a.agent_name,count(a.type) countnum,sum(a.amount) sumamount
+        from increment_log a
+        <where>
+            <!-- 非顶级机构 -->
+            <if test="obj_no!=null and obj_no!=''">
+                and a.agent_num=#{obj_no}
+            </if>
+            <!-- 代理商编号 -->
+            <if test="agent_num!=null and agent_num!=''">
+                and a.agent_num=#{agent_num}
+            </if>
+            <!-- 代理商名称 -->
+            <if test="agent_name!=null and agent_name!=''">
+                and a.agent_name like '%'||#{agent_name}||'%'
+            </if>
+            <!-- 添加时间（开始） -->
+            <if test="start_localdate!=null and start_localdate!=''">
+                and a.create_date <![CDATA[>=]]> #{start_localdate}
+            </if>
+            <!-- 添加时间（截止） -->
+            <if test="end_localdate!=null and end_localdate!=''">
+                and a.create_date <![CDATA[<=]]> #{end_localdate}
+            </if>
+            <!-- 类型 -->
+            <if test="type!=null and type!=''">
+                and a.type = #{type}
+            </if>
+            <!--增值服务类型-->
+            <if test="insurance_type!=null and insurance_type!=''">
+                and a.insurance_type = #{insurance_type}
+            </if>
+        </where>
+        group by a.type,a.insurance_type,a.create_date,a.agent_num,a.agent_name
+        order by a.agent_num asc,a.create_date desc
+    </select>
+
+</mapper>

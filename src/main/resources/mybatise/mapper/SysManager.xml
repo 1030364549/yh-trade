@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="SysManager">
+
+    <!-- 角色管理-分页查询 -->
+    <select id="getRoleList" resultType="map" parameterType="map">
+      select role_id,role_name,role_remark,lvl,parent_role,create_name,create_time,modify_name,modify_time from sys_role
+      where belong=#{belong}
+      order by parent_role,role_id
+    </select>
+
+    <!-- 获取指定角色分组的级别 -->
+    <select id="getRoleLvel" resultType="int" parameterType="map">
+        select lvl from sys_role where role_id = #{parent_role}
+    </select>
+
+    <!-- 添加角色 -->
+    <insert id="saveRole" parameterType="map">
+        insert into sys_role(role_id,role_name,role_remark,create_name,create_time,lvl,parent_role,belong)
+        values(seq_sys_role.nextval,#{role_name},#{role_remark},#{create_name},#{create_time},#{lvl},#{parent_role},#{belong})
+    </insert>
+
+    <!-- 获取当前登录用户的角色权限以及选择的角色的权限 -->
+    <select id="getCarteByRole" resultType="map" parameterType="map">
+        select tmp1.id,tmp1.carte_name,tmp1.parent_id,tmp1.parents,tmp1.levels,tmp2.gn_id cid from (
+        select id,carte_name,parent_id,parents,levels from back_carte where belong_terrace=#{belong_terrace}
+        <if test="llvl > 0">
+            and id in (
+              select gn_id from sys_role_qx where gn_type=#{gn_type} and role_id in (select role_id from sys_role_user where admin_id=#{adminId})
+            )
+        </if>
+        ) tmp1
+        left join
+        (
+          select gn_id from sys_role_qx where gn_type=#{gn_type} and role_id=#{xRole}
+        ) tmp2 on tmp1.id=tmp2.gn_id
+        order by tmp1.parents,tmp1.parent_id
+    </select>
+
+    <!-- 删除该角色已有的菜单权限 -->
+    <delete id="delCarteOrBtByRole" parameterType="map">
+        delete from sys_role_qx where gn_type=#{gn_type} and role_id=#{role_id}
+    </delete>
+
+    <!-- 保存角色菜单/按钮权限 -->
+    <insert id="saveRoleCarteOrBt" parameterType="map">
+        insert into sys_role_qx(role_id,gn_type,gn_id)
+        select #{role_id},#{gn_type},gn_id from (
+        <foreach item="item" index="index" collection="carteIds" separator="union" >
+            select #{item} gn_id from dual
+        </foreach>
+        )
+    </insert>
+
+    <!-- 获取当前登录用户的按钮权限以及所选角色菜单的按钮 -->
+    <select id="getButtonByCarte" resultType="map" parameterType="map">
+        select tmp1.bt_id,tmp1.bt_name,tmp1.carte_id,tmp2.bt_id btid2,tmp3.carte_name from (
+            select bt_id,bt_name,carte_id from buttons where 1=1
+            <if test="llvl > 0">
+              and bt_id in (select gn_id from sys_role_qx where gn_type=#{gn_type1} and role_id in (select role_id from sys_role_user where admin_id=#{adminId}))
+            </if>
+            and carte_id in (select gn_id from sys_role_qx where gn_type=#{gn_type0} and role_id =#{xRole} )
+        ) tmp1
+        left join (
+            select bt_id from buttons where bt_id in (select gn_id from sys_role_qx where gn_type=#{gn_type1} and role_id=#{xRole})
+            and carte_id in (select gn_id from sys_role_qx where gn_type=#{gn_type0} and role_id=#{xRole})
+        ) tmp2 on tmp1.bt_id=tmp2.bt_id
+        left join back_carte tmp3 on tmp1.carte_id=tmp3.id
+        where tmp3.id is not null
+        order by tmp1.carte_id,tmp1.bt_id
+    </select>
+
+    <!-- 用户分页查询 -->
+    <select id="getUserList" resultType="map" parameterType="page">
+        select admin_id,admin_name,admin_realname,admin_pass,admin_intro,att,is_admin,belong,add_time from admin_info
+        <where>
+            belong = #{params.belong} and is_admin = #{params.is_admin}
+            <!-- 账号 -->
+            <if test="params.admin_name!=null and params.admin_name!=''">
+                and admin_name like '%${params.admin_name}%'
+            </if>
+            <!-- 名称 -->
+            <if test="params.admin_realname!=null and params.admin_realname!=''">
+                and admin_realname like '%${params.admin_realname}%'
+            </if>
+            <!-- 状态 -->
+            <if test="params.att!=null and params.att!=''">
+                and att = #{params.att}
+            </if>
+        </where>
+        order by admin_id desc
+    </select>
+
+    <!-- 删除用户角色关联 -->
+    <delete id="delUserRole" parameterType="int">
+        delete from sys_role_user where admin_id = #{admin_id}
+    </delete>
+
+    <!-- 添加用户角色 -->
+    <insert id="saveUserRole" parameterType="map">
+        insert into sys_role_user(admin_id,add_man,add_time,role_id)
+        select #{admin_id},#{add_man},#{add_time},role_id from (
+        <foreach item="item" index="index" collection="roleids" separator="union" >
+            select #{item} role_id from dual
+        </foreach>
+        )
+    </insert>
+
+    <!-- 用户角色默认选中 -->
+    <select id="getUserRoleList" resultType="map" parameterType="map">
+        select sr.role_id,sr.role_name,sr.lvl,sr.parent_role,case when sru.role_id=sr.role_id then 'true' else 'false' end xrole_id from sys_role sr
+        left join sys_role_user sru on sr.role_id=sru.role_id and sru.admin_id=#{xadmin_id}
+        where belong=#{belong}
+    </select>
+
+    <!-- 分页查询分公司 -->
+    <select id="getCompany" resultType="map" parameterType="page">
+        select cd_id,cd_name,cd_remark,parent_cdid,add_man,add_date from companydept
+        order by parent_cdid,add_date desc
+    </select>
+
+    <!-- 添加部门 -->
+    <insert id="saveCompanyDept" parameterType="map">
+        insert into companydept(cd_id,cd_name,cd_remark,parent_cdid,add_man,add_date,lvl)
+        values(seq_companydept.nextval,#{cd_name},#{cd_remark},#{parent_cdid},#{add_man},#{add_date},#{lvl})
+    </insert>
+
+    <!-- 获取指定部门的级别 -->
+    <select id="getLvlByDept" parameterType="map" resultType="int">
+        select lvl from companydept where cd_id=#{parent_cdid}
+    </select>
+
+
+    <!-- 查询部门 -->
+    <select id="getDeptList" resultType="map" parameterType="map">
+        select d1.cd_id,d1.cd_name,d1.cd_remark,d1.parent_cdid,d1.add_man,d1.add_date,d1.lvl from companydept d1
+        order by d1.parent_cdid,d1.cd_id
+    </select>
+
+    <!-- 根据类型或分公司查询 -->
+    <select id="getCompayDeptList" resultType="map" parameterType="map">
+        select cd_id,cd_name,cd_remark,parent_cdid,add_man,add_date from companydept
+        where parent_cdid=#{comp_id}
+        order by cd_id
+    </select>
+
+
+
+    <!-- 行为记录 -->
+    <select id="sysLogList" resultType="map" parameterType="page">
+        select cl_serial,username,operation,method,params,ip,createdate,createtime,modular,cartename,belong from sys_log
+        <where>
+            (createdate between #{params.startlocaldate} and #{params.endlocaldate} )
+            <!-- 操作人 -->
+            <if test="params.username!=null and params.username!=''">
+                and username like '%${params.username}%'
+            </if>
+            <!-- 操作内容 -->
+            <if test="params.operation!=null and params.operation!=''">
+                and operation like '%${params.operation}%'
+            </if>
+            <!-- 方法 -->
+            <if test="params.method!=null and params.method!=''">
+                and method like '%${params.method}%'
+            </if>
+            <!-- 模块 -->
+            <if test="params.modular!=null and params.modular!=''">
+                and modular like '%${params.modular}%'
+            </if>
+            <!-- 菜单 -->
+            <if test="params.cartename!=null and params.cartename!=''">
+                and cartename like '%${params.cartename}%'
+            </if>
+            <!-- 平台 -->
+            <if test="params.belong!=null and params.belong!=''">
+                and belong = #{params.belong}
+            </if>
+        </where>
+        order by createdate desc,createtime desc
+    </select>
+
+    <!-- 添加系统行为记录 -->
+    <insert id="saveSysLog" parameterType="map">
+		insert into sys_log(cl_serial,username,operation,method,params,ip,createdate,createtime,modular,cartename,belong)
+		values(seq_sys_log.nextval,#{username},#{operation},#{method},#{params},#{ip},#{createdate},#{createtime},#{modular},#{cartename},#{belong})
+	</insert>
+
+    <!-- 删除部门 -->
+    <delete id="delcdComp" parameterType="map">
+        delete from companydept where cd_id=#{cd_id}
+    </delete>
+
+    <!-- 获取指定部门的下级部门数量 -->
+    <select id="getCountByDept" resultType="int" parameterType="map">
+        select count(*) from companydept where parent_cdid=#{parent_cdid}
+    </select>
+
+    <!-- 获取角色的下级角色数量 -->
+    <select id="getCountByRole" resultType="int" parameterType="map">
+        select count(*) from sys_role where parent_role in (
+        <foreach item="item" index="index" collection="role_ids" separator="," >
+            #{item}
+        </foreach>
+        )
+    </select>
+
+    <!-- 删除角色 -->
+    <delete id="delRole" parameterType="map">
+        delete from sys_role where role_id in (
+        <foreach item="item" index="index" collection="role_ids" separator="," >
+            #{item}
+        </foreach>
+        )
+    </delete>
+
+
+
+</mapper>

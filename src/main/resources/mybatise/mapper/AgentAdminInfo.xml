@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="AgentAdminInfo">
+
+    <insert id="save" parameterType="com.yh.entity.AgentAdminInfo">
+
+		insert into AGENT_ADMIN_INFO (ADMIN_ID, ADMIN_NAME, ADMIN_REALNAME, ADMIN_PASS, ADMIN_INTRO, ATT, IS_ADMIN, TYPE, ROLE_NUM) values (
+		SEQ_ADMIN_INFO.nextval,#{admin_name},#{admin_realname},#{admin_pass},#{admin_intro},#{att},#{is_admin},#{type},#{role_num}
+		)
+	</insert>
+
+</mapper>

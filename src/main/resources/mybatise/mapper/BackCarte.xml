@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="BackCarte">
+	<!-- 查询用户菜单 -->
+	<select id="HFBackCarte" resultType="map" parameterType="map">
+		select id,carte_name,href,target,rel,carte_intro,parent_id,levels,parents,belong_terrace from back_carte 
+		where belong_terrace=#{belong_terrace}
+		<!-- 用户角色判断 -->
+		<if test="is_admin != 0 ">
+			and id in (select gn_id from sys_role_qx where gn_type=#{gn_type} and role_id in (select role_id from sys_role_user where admin_id=#{admin_id}) )
+		</if>
+		order by parent_id,parents
+	</select>
+	
+	<!-- 查询单个菜单的详情 -->
+	<select id="getCartInfoById" resultType="map" parameterType="map">
+		select id,carte_name,href,target,rel,carte_intro,parent_id,levels,parents,belong_terrace,
+		(select carte_name from back_carte where parent_id=bc.parents and belong_terrace=#{belong_terrace}) parents_name from back_carte bc where id=#{id}
+	</select>
+	
+	<!-- 查询父节点下的最大节点编号 -->
+	<select id="selMaxParentId" resultType="String" parameterType="map">
+		select max(parent_id) from BACK_CARTE where levels = #{levels}
+	</select>
+	
+	<!-- 查询指定菜单的级别 -->
+	<select id="selLevels" resultType="int" parameterType="map">
+		select levels from BACK_CARTE where parent_id=#{parents} 
+	</select>
+	
+	<!-- 查询指定菜单下的最大节点编号 -->
+	<select id="selMaxParentIdByPa" resultType="String" parameterType="map">
+		select max(parent_id) from BACK_CARTE where parents = #{parents} 
+	</select>
+	
+	<!-- 添加菜单 -->
+	<insert id="saveCarte" parameterType="map">
+		insert into back_carte(id,carte_name,href,target,carte_intro,parent_id,levels,parents,belong_terrace,rel) 
+		values(seq_back_carte.nextval,#{carte_name},#{href},#{target},#{carte_intro},#{parent_id},#{levels},#{parents},#{belong_terrace},#{rel})
+	</insert>
+	
+	<!-- 修改菜单信息 -->
+	<update id="updateCarte" parameterType="map">
+		update back_carte set carte_name=#{carte_name},href=#{href},target=#{target},carte_intro=#{carte_intro},rel=#{rel} where id=#{id}
+	</update>
+	
+	<!-- 删除菜单 -->
+	<delete id="delCarte" parameterType="map">
+		delete from back_carte where id=#{id}
+	</delete>
+	
+	<!-- 查询指定菜单下的按钮列表 -->
+	<select id="getButtonListByCarteId" parameterType="int" resultType="map">
+		select bt_id,bt_name,bt_href,bt_sc_href,addtime,remark,rel from buttons where carte_id=#{carte_id}
+	</select>
+	
+	<!-- 添加按钮 -->
+	<insert id="saveButton" parameterType="com.yh.entity.Buttons">
+		insert into buttons(bt_id,bt_name,bt_href,bt_sc_href,carte_id,addtime,remark,rel) 
+		values(seq_buttons.nextval,#{bt_name},#{bt_href},#{bt_sc_href},#{carte_id},#{addtime},#{remark},#{rel})
+	</insert>
+	
+	<!-- 查询单个按钮信息 -->
+	<select id="getOneButtonById" parameterType="map" resultType="map">
+		select bt_id,bt_name,bt_href,bt_sc_href,carte_id,addtime,remark,rel from buttons where carte_id=#{carte_id} and bt_id=#{bt_id}
+	</select>
+	
+	<!-- 修改按钮 -->
+	<update id="updateButton" parameterType="com.yh.entity.Buttons">
+		update buttons set bt_name=#{bt_name},bt_href=#{bt_href},bt_sc_href=#{bt_sc_href},
+		addtime=#{addtime},remark=#{remark},rel=#{rel} where carte_id=#{carte_id} and bt_id=#{bt_id}
+	</update>
+	
+	<!-- 删除按钮 -->
+	<delete id="delButton" parameterType="map">
+		delete from buttons where carte_id=#{carte_id} and bt_id=#{bt_id}
+	</delete>
+	
+	
+</mapper>
